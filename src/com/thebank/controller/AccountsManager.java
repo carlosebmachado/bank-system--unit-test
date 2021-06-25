@@ -12,6 +12,10 @@ public class AccountsManager {
         this.ACCOUNTS = accounts;
     }
 
+    public int countAccounts() {
+        return ACCOUNTS.size();
+    }
+
     public Account selectAccountById(int id) {
         for (var account : ACCOUNTS) {
             if (account.getId() == id)
