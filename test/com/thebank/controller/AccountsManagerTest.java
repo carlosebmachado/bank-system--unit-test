@@ -6,6 +6,8 @@ import static org.junit.Assert.*;
 import java.util.ArrayList;
 
 import com.thebank.model.Account;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 public class AccountsManagerTest {
@@ -14,18 +16,27 @@ public class AccountsManagerTest {
 	private final int CUSTOMER_ID_1 = 1;
 	private final int CUSTOMER_ID_2 = 2;
 
-	@Test
-	public void testSelectAccountById() {
+
+	@Before
+	public void setUp() {
 		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, 200, 0, true);
-		var account2 = new Account(CUSTOMER_ID_2, 0, 0, true);
+		var account1 = new Account(CUSTOMER_ID_1, 0, 0, true);
+		var account2 = new Account(CUSTOMER_ID_2, 0, 0, false);
 
 		var accounts = new ArrayList<Account>();
 		accounts.add(account1);
 		accounts.add(account2);
 
 		accountsManager = new AccountsManager(accounts);
+	}
 
+	@After
+	public void tearDown() {
+		accountsManager.dump();
+	}
+
+	@Test
+	public void testSelectAccountById() {
 		/* ========== Act ========== */
 		var selectedAccount = accountsManager.selectAccountById(CUSTOMER_ID_2);
 
@@ -35,16 +46,6 @@ public class AccountsManagerTest {
 
 	@Test
 	public void testDeleteAccountById() {
-		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, 200, 0, true);
-		var account2 = new Account(CUSTOMER_ID_2, 0, 0, true);
-
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-
-		accountsManager = new AccountsManager(accounts);
-
 		/* ========== Act ========== */
 		var success = accountsManager.deleteAccountById(CUSTOMER_ID_2);
 		var selectedAccount1 = accountsManager.selectAccountById(CUSTOMER_ID_1);
@@ -59,18 +60,8 @@ public class AccountsManagerTest {
 
 	@Test
 	public void testAccountIsActive_IsActive() {
-		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, 200, 0, false);
-		var account2 = new Account(CUSTOMER_ID_2, 0, 0, true);
-
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-
-		accountsManager = new AccountsManager(accounts);
-
 		/* ========== Act ========== */
-		var success = accountsManager.accountIsActive(CUSTOMER_ID_2);
+		var success = accountsManager.accountIsActive(CUSTOMER_ID_1);
 
 		/* ========== Assert ========== */
 		assertTrue(success);
@@ -78,16 +69,6 @@ public class AccountsManagerTest {
 
 	@Test
 	public void testAccountIsActive_NoActive() {
-		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, 200, 0, true);
-		var account2 = new Account(CUSTOMER_ID_2, 0, 0, false);
-
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-
-		accountsManager = new AccountsManager(accounts);
-
 		/* ========== Act ========== */
 		var success = accountsManager.accountIsActive(CUSTOMER_ID_2);
 
@@ -98,106 +79,77 @@ public class AccountsManagerTest {
 	@Test
 	public void testTransferAmount() {
 		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, 200, 0, true);
-		var account2 = new Account(CUSTOMER_ID_2, 0, 0, true);
-		
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-		
-		accountsManager = new AccountsManager(accounts);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setBalance(200);
 
 		/* ========== Act ========== */
 		var success = accountsManager.transferAmount(100, CUSTOMER_ID_1, CUSTOMER_ID_2);
 		
 		/* ========== Assert ========== */
 		assertTrue(success);
-		assertThat(account2.getBalance(), is(100.0));
-		assertThat(account1.getBalance(), is(100.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_2).getBalance(), is(100.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_1).getBalance(), is(100.0));
 	}
 
 	@Test
-	public void testTransferAmount_Insufficient() {
+	public void testTransferAmount_UsingSpecialLimit() {
 		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, 100, 100, true);
-		var account2 = new Account(CUSTOMER_ID_2, 0, 0, true);
-		
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-		
-		accountsManager = new AccountsManager(accounts);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setBalance(100);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setSpecialLimit(100);
 
 		/* ========== Act ========== */
 		var success = accountsManager.transferAmount(200, CUSTOMER_ID_1, CUSTOMER_ID_2);
 		
 		/* ========== Assert ========== */
 		assertTrue(success);
-		assertThat(account1.getBalance(), is(-100.0));
-		assertThat(account2.getBalance(), is(200.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_1).getBalance(), is(-100.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_2).getBalance(), is(200.0));
 	}
 
 	@Test
-	public void testTransferAmount_NegativeBalance() {
+	public void testTransferAmount_NegativeBalanceUsingSpecialLimit() {
 		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, -100, 300, true);
-		var account2 = new Account(CUSTOMER_ID_2, 0, 0, true);
-		
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-		
-		accountsManager = new AccountsManager(accounts);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setBalance(-100);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setSpecialLimit(300);
 
 		/* ========== Act ========== */
 		var success = accountsManager.transferAmount(200, CUSTOMER_ID_1, CUSTOMER_ID_2);
 		
 		/* ========== Assert ========== */
 		assertTrue(success);
-		assertThat(account1.getBalance(), is(-300.0));
-		assertThat(account2.getBalance(), is(200.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_1).getBalance(), is(-300.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_2).getBalance(), is(200.0));
 	}
 
 	@Test
 	public void testTransferAmount_NegativeToNegativeBalance() {
 		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, -100, 300, true);
-		var account2 = new Account(CUSTOMER_ID_2, -100, 0, true);
-		
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-		
-		accountsManager = new AccountsManager(accounts);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setBalance(-100);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setSpecialLimit(300);
+		accountsManager.selectAccountById(CUSTOMER_ID_2).setBalance(-100);
 
 		/* ========== Act ========== */
 		var success = accountsManager.transferAmount(200, CUSTOMER_ID_1, CUSTOMER_ID_2);
 		
 		/* ========== Assert ========== */
 		assertTrue(success);
-		assertThat(account1.getBalance(), is(-300.0));
-		assertThat(account2.getBalance(), is(100.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_1).getBalance(), is(-300.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_2).getBalance(), is(100.0));
 	}
 
 	@Test
 	public void testTransferAmount_Nothing() {
 		/* ========== Arrange ========== */
-		var account1 = new Account(CUSTOMER_ID_1, -100, 100, true);
-		var account2 = new Account(CUSTOMER_ID_2, -100, 0, true);
-		
-		var accounts = new ArrayList<Account>();
-		accounts.add(account1);
-		accounts.add(account2);
-		
-		accountsManager = new AccountsManager(accounts);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setBalance(-100);
+		accountsManager.selectAccountById(CUSTOMER_ID_1).setSpecialLimit(100);
+		accountsManager.selectAccountById(CUSTOMER_ID_2).setBalance(-100);
 
 		/* ========== Act ========== */
 		var success = accountsManager.transferAmount(0, CUSTOMER_ID_1, CUSTOMER_ID_2);
 		
 		/* ========== Assert ========== */
 		assertTrue(success);
-		assertThat(account1.getBalance(), is(-100.0));
-		assertThat(account2.getBalance(), is(-100.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_1).getBalance(), is(-100.0));
+		assertThat(accountsManager.selectAccountById(CUSTOMER_ID_2).getBalance(), is(-100.0));
 	}
 	
 }

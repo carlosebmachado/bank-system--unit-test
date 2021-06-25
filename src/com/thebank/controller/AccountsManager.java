@@ -48,6 +48,10 @@ public class AccountsManager {
         return false;
     }
 
+    public void dump() {
+        this.ACCOUNTS.clear();
+    }
+
     public boolean transferAmount(double value, int originId, int destinationId) {
         var originAccount = selectAccountById(originId);
         var destinationAccount = selectAccountById(destinationId);

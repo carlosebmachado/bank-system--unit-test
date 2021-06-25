@@ -21,7 +21,7 @@ public class CustomersManagerTest {
 	public void setUp() {
 		/* ========== Arrange ========== */
 		var customer1 = new Customer(CUSTOMER_ID_1, "Jose Machado", 22, "mail@mail.com", 1, true);
-		var customer2 = new Customer(CUSTOMER_ID_2, "Joao Cardoso", 24, "mail@mail.com", 2, true);
+		var customer2 = new Customer(CUSTOMER_ID_2, "Joao Cardoso", 24, "mail@mail.com", 2, false);
 		
 		var customers = new ArrayList<Customer>();
 		customers.add(customer1);
@@ -62,6 +62,24 @@ public class CustomersManagerTest {
 		assertThat(wasRemoved, is(true));
 		assertThat(customersManager.countCustomers(), is(1));
 		assertNull(customersManager.selectCustomerById(CUSTOMER_ID_2));
+	}
+
+	@Test
+	public void testCustomerIsActive_IsActive() {
+		/* ========== Act ========== */
+		var isActive = customersManager.customerIsActive(CUSTOMER_ID_1);
+
+		/* ========== Assert ========== */
+		assertThat(isActive, is(true));
+	}
+
+	@Test
+	public void testCustomerIsActive_NoActive() {
+		/* ========== Act ========== */
+		var isActive = customersManager.customerIsActive(CUSTOMER_ID_2);
+
+		/* ========== Assert ========== */
+		assertThat(isActive, is(false));
 	}
 
 	@Test
